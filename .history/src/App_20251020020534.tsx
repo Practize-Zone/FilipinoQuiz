@@ -7,16 +7,18 @@ import { ResultScreen } from './components/ResultScreen';
 import { TeacherDashboard } from './components/TeacherDashboard';
 import { AdminLogin } from './components/AdminLogin';
 
-// ⚠️ SUPABASE INTEGRATION - enabled
-import { savePart1Score, updatePart2Score } from './utils/supabase/database';
+// ⚠️ SUPABASE INTEGRATION - Uncomment these imports when using in VSCode
+import { saveQuizScore, getAllQuizScores } from './utils/supabase/database';
 import { signInTeacher, getCurrentTeacher, signOutTeacher } from './utils/supabase/auth';
 
 type Screen = 'welcome' | 'pagbabalik-aral' | 'unlocked' | 'quiz' | 'result' | 'admin-login' | 'admin-dashboard';
 
 interface StudentScore {
   name: string;
-  score: number;
-  totalQuestions: number;
+  part1_score: number;
+  part2_score: number;
+  part1_total: number;
+  part2_total: number;
   date: string;
 }
 
@@ -25,15 +27,13 @@ export default function App() {
   const [studentName, setStudentName] = useState('');
   const [reviewScore, setReviewScore] = useState(0);
   const [currentScore, setCurrentScore] = useState(0);
-  const [currentRecordId, setCurrentRecordId] = useState<number | null>(null);
   const [scores, setScores] = useState<StudentScore[]>([]);
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
+  const [hasCompletedPart1, setHasCompletedPart1] = useState(false);
 
   const totalReviewQuestions = 5; // Pagbabalik-aral has 5 questions
   const totalQuestions = 5; // Main quiz has 5 questions
 
-  // ⚠️ SUPABASE AUTH - enabled
-  // Check if teacher is already logged in on mount
   useEffect(() => {
     checkAuthStatus();
   }, []);
@@ -70,103 +70,85 @@ export default function App() {
     }
   }, [currentScreen]);
 
-  // ⚠️ SUPABASE - Load scores from database when admin dashboard opens
-  // useEffect(() => {
-  //   if (currentScreen === 'admin-dashboard') {
-  //     loadScoresFromDatabase();
-  //   }
-  // }, [currentScreen]);
+  useEffect(() => {
+    if (currentScreen === 'admin-dashboard') {
+      loadScoresFromDatabase();
+    }
+  }, [currentScreen]);
 
-  // const loadScoresFromDatabase = async () => {
-  //   const { success, data } = await getAllQuizScores();
-  //   if (success && data) {
-  //     const formattedScores = data.map((score: any) => ({
-  //       name: score.student_name,
-  //       score: score.score,
-  //       totalQuestions: score.total_questions,
-  //       date: new Date(score.created_at).toLocaleDateString('fil-PH', {
-  //         year: 'numeric',
-  //         month: 'long',
-  //         day: 'numeric',
-  //         hour: '2-digit',
-  //         minute: '2-digit'
-  //       })
-  //     }));
-  //     setScores(formattedScores);
-  //   }
-  // };
+  const loadScoresFromDatabase = async () => {
+    const { success, data } = await getAllQuizScores();
+    if (success && data) {
+      const formattedScores = data.map((score: any) => ({
+        name: score.student_name,
+        part1_score: score.part1_score,
+        part2_score: score.part2_score,
+        part1_total: score.part1_total,
+        part2_total: score.part2_total,
+        date: new Date(score.created_at).toLocaleDateString('fil-PH', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        })
+      }));
+      setScores(formattedScores);
+    }
+  };
 
   const handleStart = (name: string) => {
     setStudentName(name);
-    setCurrentScreen('pagbabalik-aral'); // Start with review section
+    // If they haven't completed Part 1, start there
+    // If they have, go directly to Part 2
+    if (!hasCompletedPart1) {
+      setCurrentScreen('pagbabalik-aral');
+    } else {
+      setCurrentScreen('quiz');
+    }
   };
 
   const handleReviewComplete = (score: number) => {
     setReviewScore(score);
-    setCurrentScreen('unlocked'); // Show unlocked screen
-
-    // Save Part 1 score to Supabase and store record id for part2 update
-    (async () => {
-      const { success, recordId } = await savePart1Score(studentName, score, totalReviewQuestions);
-      if (success && recordId) {
-        setCurrentRecordId(recordId);
-      }
-    })();
+    setHasCompletedPart1(true);
+    setCurrentScreen('unlocked');
   };
 
   const handleContinueToQuiz = () => {
-    setCurrentScreen('quiz'); // Proceed to main quiz
+    setCurrentScreen('quiz');
   };
 
   const handleBackToMenuFromUnlocked = () => {
-    setCurrentScreen('welcome'); // Go back to main menu
-    // DON'T reset studentName - keep it so they can restart quickly!
-    setReviewScore(0);
-    setCurrentScore(0);
+    // DON'T reset progress - they can continue later
+    setCurrentScreen('welcome');
   };
 
   const handleQuizComplete = async (score: number) => {
     setCurrentScore(score);
     
-    const percentage = (score / totalQuestions) * 100;
+    const part1Percentage = (reviewScore / totalReviewQuestions) * 100;
+    const part2Percentage = (score / totalQuestions) * 100;
     
-    // ⚠️ SUPABASE - Save to database (uncomment when using in VSCode)
-    // await saveQuizScore({
-    //   student_name: studentName,
-    //   score: score,
-    //   total_questions: totalQuestions,
-    //   percentage: percentage,
-    //   quiz_topic: 'Ang Matanda at ang Dagat'
-    // });
-
-    // Save to database part2 (if two-part flow) and to local state
-    if (currentRecordId) {
-      await updatePart2Score(currentRecordId, score, totalQuestions);
-    }
-
-    // Temporary: Save to local state (remove when using Supabase)
-    const newScore: StudentScore = {
-      name: studentName,
-      score: score,
-      totalQuestions: totalQuestions,
-      date: new Date().toLocaleDateString('fil-PH', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      })
-    };
+    await saveQuizScore({
+      student_name: studentName,
+      part1_score: reviewScore,
+      part2_score: score,
+      part1_total: totalReviewQuestions,
+      part2_total: totalQuestions,
+      part1_percentage: part1Percentage,
+      part2_percentage: part2Percentage,
+      quiz_topic: 'Ang Matanda at ang Dagat'
+    });
     
-    setScores(prevScores => [...prevScores, newScore]);
     setCurrentScreen('result');
   };
 
   const handleRetake = () => {
     setCurrentScreen('welcome');
-    // DON'T reset studentName - keep it for quick restart!
+    // Reset all progress for a fresh start
     setReviewScore(0);
     setCurrentScore(0);
+    setHasCompletedPart1(false);
   };
 
   const handleViewScores = () => {
@@ -178,7 +160,6 @@ export default function App() {
   };
 
   const handleAdminLogin = async (email?: string, password?: string) => {
-    // ⚠️ SUPABASE AUTH - Use real authentication (uncomment when using in VSCode)
     if (email && password) {
       const { success } = await signInTeacher(email, password);
       if (success) {
@@ -189,20 +170,13 @@ export default function App() {
         return false;
       }
     }
-
-    // Fallback - if no credentials provided, deny
     return false;
   };
 
   const handleBackFromAdmin = async () => {
-    // ⚠️ SUPABASE AUTH - Sign out
     await signOutTeacher();
-
     setIsAdminAuthenticated(false);
     setCurrentScreen('welcome');
-    setStudentName('');
-    setReviewScore(0);
-    setCurrentScore(0);
     window.history.pushState({}, '', '/');
   };
 
@@ -217,6 +191,7 @@ export default function App() {
         <WelcomeScreen 
           onStart={handleStart}
           existingName={studentName}
+          hasCompletedPart1={hasCompletedPart1}
         />
       )}
 
@@ -247,8 +222,10 @@ export default function App() {
       {currentScreen === 'result' && (
         <ResultScreen
           studentName={studentName}
-          score={currentScore}
-          totalQuestions={totalQuestions}
+          part1Score={reviewScore}
+          part2Score={currentScore}
+          part1Total={totalReviewQuestions}
+          part2Total={totalQuestions}
           onRetake={handleRetake}
           onViewScores={handleViewScores}
         />

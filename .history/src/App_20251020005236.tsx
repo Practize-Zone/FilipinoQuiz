@@ -7,9 +7,9 @@ import { ResultScreen } from './components/ResultScreen';
 import { TeacherDashboard } from './components/TeacherDashboard';
 import { AdminLogin } from './components/AdminLogin';
 
-// ⚠️ SUPABASE INTEGRATION - enabled
-import { savePart1Score, updatePart2Score } from './utils/supabase/database';
-import { signInTeacher, getCurrentTeacher, signOutTeacher } from './utils/supabase/auth';
+// ⚠️ SUPABASE INTEGRATION - Uncomment these imports when using in VSCode
+// import { saveQuizScore, getAllQuizScores } from './utils/supabase/database';
+// import { signInTeacher, getCurrentTeacher, signOutTeacher } from './utils/supabase/auth';
 
 type Screen = 'welcome' | 'pagbabalik-aral' | 'unlocked' | 'quiz' | 'result' | 'admin-login' | 'admin-dashboard';
 
@@ -25,25 +25,24 @@ export default function App() {
   const [studentName, setStudentName] = useState('');
   const [reviewScore, setReviewScore] = useState(0);
   const [currentScore, setCurrentScore] = useState(0);
-  const [currentRecordId, setCurrentRecordId] = useState<number | null>(null);
   const [scores, setScores] = useState<StudentScore[]>([]);
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
 
   const totalReviewQuestions = 5; // Pagbabalik-aral has 5 questions
   const totalQuestions = 5; // Main quiz has 5 questions
 
-  // ⚠️ SUPABASE AUTH - enabled
+  // ⚠️ SUPABASE AUTH - Uncomment when using in VSCode
   // Check if teacher is already logged in on mount
-  useEffect(() => {
-    checkAuthStatus();
-  }, []);
+  // useEffect(() => {
+  //   checkAuthStatus();
+  // }, []);
 
-  const checkAuthStatus = async () => {
-    const { success, session } = await getCurrentTeacher();
-    if (success && session) {
-      setIsAdminAuthenticated(true);
-    }
-  };
+  // const checkAuthStatus = async () => {
+  //   const { success, session } = await getCurrentTeacher();
+  //   if (success && session) {
+  //     setIsAdminAuthenticated(true);
+  //   }
+  // };
 
   // Check URL for /admin route
   useEffect(() => {
@@ -104,14 +103,6 @@ export default function App() {
   const handleReviewComplete = (score: number) => {
     setReviewScore(score);
     setCurrentScreen('unlocked'); // Show unlocked screen
-
-    // Save Part 1 score to Supabase and store record id for part2 update
-    (async () => {
-      const { success, recordId } = await savePart1Score(studentName, score, totalReviewQuestions);
-      if (success && recordId) {
-        setCurrentRecordId(recordId);
-      }
-    })();
   };
 
   const handleContinueToQuiz = () => {
@@ -138,11 +129,6 @@ export default function App() {
     //   percentage: percentage,
     //   quiz_topic: 'Ang Matanda at ang Dagat'
     // });
-
-    // Save to database part2 (if two-part flow) and to local state
-    if (currentRecordId) {
-      await updatePart2Score(currentRecordId, score, totalQuestions);
-    }
 
     // Temporary: Save to local state (remove when using Supabase)
     const newScore: StudentScore = {
@@ -179,25 +165,27 @@ export default function App() {
 
   const handleAdminLogin = async (email?: string, password?: string) => {
     // ⚠️ SUPABASE AUTH - Use real authentication (uncomment when using in VSCode)
-    if (email && password) {
-      const { success } = await signInTeacher(email, password);
-      if (success) {
-        setIsAdminAuthenticated(true);
-        setCurrentScreen('admin-dashboard');
-        return true;
-      } else {
-        return false;
-      }
-    }
+    // if (email && password) {
+    //   const { success } = await signInTeacher(email, password);
+    //   if (success) {
+    //     setIsAdminAuthenticated(true);
+    //     setCurrentScreen('admin-dashboard');
+    //   } else {
+    //     // Show error message
+    //     return false;
+    //   }
+    // }
 
-    // Fallback - if no credentials provided, deny
-    return false;
+    // Temporary: Simple password check (remove when using Supabase)
+    setIsAdminAuthenticated(true);
+    setCurrentScreen('admin-dashboard');
+    return true;
   };
 
   const handleBackFromAdmin = async () => {
-    // ⚠️ SUPABASE AUTH - Sign out
-    await signOutTeacher();
-
+    // ⚠️ SUPABASE AUTH - Sign out (uncomment when using in VSCode)
+    // await signOutTeacher();
+    
     setIsAdminAuthenticated(false);
     setCurrentScreen('welcome');
     setStudentName('');
