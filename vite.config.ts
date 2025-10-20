@@ -51,9 +51,9 @@
       },
     },
     build: {
-      target: 'esnext',
-      outDir: 'build',
-    },
+    target: 'esnext',
+    outDir: 'dist',
+   },
     server: {
       port: 3001,
       open: true,
