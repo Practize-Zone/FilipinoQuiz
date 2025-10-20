@@ -6,7 +6,7 @@ import { QuizScreen } from './components/QuizScreen';
 import { ResultScreen } from './components/ResultScreen';
 import { TeacherDashboard } from './components/TeacherDashboard';
 import { AdminLogin } from './components/AdminLogin';
-import { getAllQuizScores } from './utils/supabase/database';
+import { getAllQuizScores, subscribeToQuizScores } from './utils/supabase/database';
 
 // ⚠️ SUPABASE INTEGRATION - enabled
 import { savePart1Score, updatePart2Score } from './utils/supabase/database';
@@ -78,21 +78,49 @@ export default function App() {
     }
   }, [currentScreen]);
 
+  // ⚠️ SUPABASE - Subscribe to real-time updates when on admin dashboard
+  useEffect(() => {
+    if (currentScreen === 'admin-dashboard') {
+      // Subscribe to real-time changes
+      const subscription = subscribeToQuizScores((payload) => {
+        console.log('📡 Real-time update received:', payload);
+        // Reload scores from database when any change occurs
+        loadScoresFromDatabase();
+      });
+
+      // Cleanup subscription when leaving dashboard
+      return () => {
+        subscription.unsubscribe();
+      };
+    }
+  }, [currentScreen]);
+
   const loadScoresFromDatabase = async () => {
     const { success, data } = await getAllQuizScores();
     if (success && data) {
-      const formattedScores = data.map((score: any) => ({
-        name: score.student_name,
-        score: score.total_score || 0, // Use total_score from new schema
-        totalQuestions: score.total_questions || 10,
-        date: new Date(score.created_at).toLocaleDateString('fil-PH', {
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit'
-        })
-      }));
+      const formattedScores = data.map((score: any) => {
+        // Calculate total score from part1 and part2 scores
+        const part1Score = score.part1_score || 0;
+        const part2Score = score.part2_score || 0;
+        const totalScore = part1Score + part2Score;
+
+        const part1Total = score.part1_total || 2;
+        const part2Total = score.part2_total || 5;
+        const totalQuestions = part1Total + part2Total;
+
+        return {
+          name: score.student_name,
+          score: totalScore,
+          totalQuestions: totalQuestions,
+          date: new Date(score.created_at).toLocaleDateString('fil-PH', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+          })
+        };
+      });
       setScores(formattedScores);
     }
   };
@@ -220,6 +248,10 @@ export default function App() {
     window.history.pushState({}, '', '/');
   };
 
+  const handleRefreshScores = () => {
+    loadScoresFromDatabase();
+  };
+
   return (
     <div className="size-full">
       {currentScreen === 'welcome' && (
@@ -274,6 +306,7 @@ export default function App() {
         <TeacherDashboard
           scores={scores}
           onBack={handleBackFromAdmin}
+          onRefresh={handleRefreshScores}
         />
       )}
     </div>
