@@ -210,7 +210,7 @@ export function AdminLogin({ onLogin, onBack }: AdminLoginProps) {
             Bumalik sa Quiz
           </Button>
 
-          {/* Debug Info (Remove in production) */}
+          
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}

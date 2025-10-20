@@ -4,40 +4,12 @@ import { supabase, QuizScore } from './client';
  * Database functions for Quiz Scores
  */
 
-// Save a new quiz score to the database (legacy support - use savePart1Score/updatePart2Score for new flow)
+// Save a new quiz score to the database
 export async function saveQuizScore(score: Omit<QuizScore, 'id' | 'created_at'>) {
   try {
-    // Map old schema to new schema
-    const payload: any = {
-      student_name: score.student_name,
-      quiz_topic: score.quiz_topic || 'Ang Matanda at ang Dagat',
-      completed_at: new Date().toISOString()
-    };
-
-    // If it's a complete quiz (both parts), split the score
-    if (score.part1_score !== undefined && score.part2_score !== undefined) {
-      payload.part1_score = score.part1_score;
-      payload.part1_total = score.part1_total || 5;
-      payload.part1_percentage = score.part1_percentage;
-      payload.part2_score = score.part2_score;
-      payload.part2_total = score.part2_total || 5;
-      payload.part2_percentage = score.part2_percentage;
-    } else {
-      // Fallback: treat as complete quiz with combined score
-      // Assume 50/50 split for Part 1 and Part 2
-      const totalScore = score.total_score || 0;
-      const halfTotal = 5;
-      payload.part1_score = Math.min(totalScore, halfTotal);
-      payload.part2_score = Math.max(0, totalScore - halfTotal);
-      payload.part1_total = halfTotal;
-      payload.part2_total = halfTotal;
-      payload.part1_percentage = (payload.part1_score / halfTotal) * 100;
-      payload.part2_percentage = (payload.part2_score / halfTotal) * 100;
-    }
-
     const { data, error } = await supabase
       .from('quiz_scores')
-      .insert([payload])
+      .insert([score])
       .select()
       .single();
 

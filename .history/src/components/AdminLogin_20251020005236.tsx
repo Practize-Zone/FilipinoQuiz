@@ -3,42 +3,32 @@ import { motion } from 'motion/react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { ImageWithFallback } from './figma/ImageWithFallback';
-import { Lock, Eye, EyeOff, Mail } from 'lucide-react';
+import { Lock, Eye, EyeOff } from 'lucide-react';
 import { FloatingFish } from './FloatingFish';
 
 interface AdminLoginProps {
-  onLogin: (email: string, password: string) => Promise<boolean>;
+  onLogin: () => void;
   onBack: () => void;
 }
 
+// Simple password for demo - in production, use proper authentication
+const ADMIN_PASSWORD = 'matanda2024';
+
 export function AdminLogin({ onLogin, onBack }: AdminLoginProps) {
-  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [isShaking, setIsShaking] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
-    setIsLoading(true);
-
-    try {
-      const success = await onLogin(email, password);
-      
-      if (!success) {
-        setError('Mali ang email o password. Subukan muli.');
-        setIsShaking(true);
-        setTimeout(() => setIsShaking(false), 500);
-        setPassword('');
-      }
-    } catch (err) {
-      setError('May error sa pag-login. Subukan muli.');
+    if (password === ADMIN_PASSWORD) {
+      onLogin();
+    } else {
+      setError('Maling password. Subukan muli.');
       setIsShaking(true);
       setTimeout(() => setIsShaking(false), 500);
-    } finally {
-      setIsLoading(false);
+      setPassword('');
     }
   };
 
@@ -126,30 +116,6 @@ export function AdminLogin({ onLogin, onBack }: AdminLoginProps) {
             onSubmit={handleSubmit}
             className="space-y-6"
           >
-            {/* Email Input */}
-            <div>
-              <label htmlFor="email" className="block mb-2 text-[#0B3D91]">
-                Email
-              </label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#0B3D91]/60" />
-                <Input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => {
-                    setEmail(e.target.value);
-                    setError('');
-                  }}
-                  placeholder="teacher@example.com"
-                  className="w-full bg-[#F5E8C7] border-[#FDB813]/30 focus:border-[#FDB813] text-[#0B3D91] placeholder:text-[#0B3D91]/40 rounded-xl h-12 pl-12"
-                  required
-                  disabled={isLoading}
-                />
-              </div>
-            </div>
-
-            {/* Password Input */}
             <div>
               <label htmlFor="password" className="block mb-2 text-[#0B3D91]">
                 Password
@@ -166,37 +132,32 @@ export function AdminLogin({ onLogin, onBack }: AdminLoginProps) {
                   placeholder="Ilagay ang password..."
                   className="w-full bg-[#F5E8C7] border-[#FDB813]/30 focus:border-[#FDB813] text-[#0B3D91] placeholder:text-[#0B3D91]/40 rounded-xl h-12 pr-12"
                   required
-                  disabled={isLoading}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-[#0B3D91]/60 hover:text-[#0B3D91] transition-colors"
-                  disabled={isLoading}
                 >
                   {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
               </div>
             </div>
 
-            {/* Error Message */}
             {error && (
               <motion.div
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-[#FF6B6B]/20 border border-[#FF6B6B]/50 text-[#FF6B6B] px-4 py-3 rounded-xl text-sm"
+                className="bg-[#FF6B6B]/20 border border-[#FF6B6B]/50 text-[#FF6B6B] px-4 py-3 rounded-xl"
               >
                 {error}
               </motion.div>
             )}
 
-            {/* Login Button */}
             <Button
               type="submit"
-              disabled={isLoading}
-              className="w-full bg-gradient-to-r from-[#FDB813] to-[#4ECDC4] hover:from-[#FDB813]/90 hover:to-[#4ECDC4]/90 text-[#0B3D91] h-14 rounded-xl shadow-lg disabled:opacity-50"
+              className="w-full bg-gradient-to-r from-[#FDB813] to-[#4ECDC4] hover:from-[#FDB813]/90 hover:to-[#4ECDC4]/90 text-[#0B3D91] h-14 rounded-xl shadow-lg"
             >
-              {isLoading ? 'Nag-login...' : 'Mag-login'}
+              Mag-login
             </Button>
           </motion.form>
 
@@ -205,27 +166,18 @@ export function AdminLogin({ onLogin, onBack }: AdminLoginProps) {
             onClick={onBack}
             variant="ghost"
             className="w-full mt-4 text-[#0B3D91]/70 hover:text-[#0B3D91] hover:bg-[#0B3D91]/5"
-            disabled={isLoading}
           >
             Bumalik sa Quiz
           </Button>
 
-          {/* Debug Info (Remove in production) */}
+          {/* Hint */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.7 }}
-            className="mt-6 p-3 bg-blue-50 border border-blue-200 rounded-xl"
+            className="mt-6 text-center text-xs text-[#0B3D91]/40"
           >
-            <p className="text-xs text-blue-900 mb-1">
-              <strong>Debug Info:</strong>
-            </p>
-            <p className="text-xs text-blue-700">
-              Supabase URL: {import.meta.env.VITE_SUPABASE_URL ? '✅ Set' : '❌ Missing'}
-            </p>
-            <p className="text-xs text-blue-700">
-              Supabase Key: {import.meta.env.VITE_SUPABASE_ANON_KEY ? '✅ Set' : '❌ Missing'}
-            </p>
+            Hint: matanda2024
           </motion.div>
         </motion.div>
       </motion.div>

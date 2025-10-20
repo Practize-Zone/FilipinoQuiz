@@ -210,25 +210,7 @@ export function AdminLogin({ onLogin, onBack }: AdminLoginProps) {
             Bumalik sa Quiz
           </Button>
 
-          {/* Debug Info (Remove in production) */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.7 }}
-            className="mt-6 p-3 bg-blue-50 border border-blue-200 rounded-xl"
-          >
-            <p className="text-xs text-blue-900 mb-1">
-              <strong>Debug Info:</strong>
-            </p>
-            <p className="text-xs text-blue-700">
-              Supabase URL: {import.meta.env.VITE_SUPABASE_URL ? '✅ Set' : '❌ Missing'}
-            </p>
-            <p className="text-xs text-blue-700">
-              Supabase Key: {import.meta.env.VITE_SUPABASE_ANON_KEY ? '✅ Set' : '❌ Missing'}
-            </p>
-          </motion.div>
-        </motion.div>
-      </motion.div>
+          
     </div>
   );
 }

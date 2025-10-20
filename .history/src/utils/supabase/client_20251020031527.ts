@@ -1,32 +1,26 @@
 import { createClient } from '@supabase/supabase-js';
 
+// These will be set in your .env file in VSCode
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-// Database Types - Updated to match new schema
+// Database Types
 export interface QuizScore {
   id?: number;
   student_name: string;
-  
-  // Part 1 (Pagbabalik-aral)
-  part1_score?: number | null;
-  part1_total?: number;
-  part1_percentage?: number | null;
-  
-  // Part 2 (Pangunahing Quiz)
-  part2_score?: number | null;
+  part1_score: number;
+  part1_total: number;
+  part1_percentage: number;
+  part2_score?: number;
   part2_total?: number;
-  part2_percentage?: number | null;
-  
-  // Combined totals (auto-calculated)
+  part2_percentage?: number;
   total_score?: number;
   total_questions?: number;
   overall_percentage?: number;
-  
   quiz_topic: string;
-  completed_at?: string | null;
+  completed_at?: string;
   created_at?: string;
 }
 

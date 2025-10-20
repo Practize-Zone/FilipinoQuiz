@@ -9,17 +9,13 @@ import {
   TableRow,
 } from './ui/table';
 import { ImageWithFallback } from './figma/ImageWithFallback';
-import { GraduationCap, ArrowLeft, RefreshCw, Users, TrendingUp, Award, Target } from 'lucide-react';
+import { GraduationCap, ArrowLeft, RefreshCw, Award, TrendingUp, Users, Target, Crown, Medal, Download } from 'lucide-react';
 import { FloatingFish } from './FloatingFish';
 
 interface StudentScore {
   name: string;
-  part1Score?: number;
-  part1Total?: number;
-  part2Score?: number;
-  part2Total?: number;
-  overallScore?: number;
-  overallTotal?: number;
+  score: number;
+  totalQuestions: number;
   date: string;
 }
 
@@ -30,42 +26,22 @@ interface TeacherDashboardProps {
 }
 
 export function TeacherDashboard({ scores, onBack, onRefresh }: TeacherDashboardProps) {
-  // Calculate statistics
+  const averageScore = scores.length > 0
+    ? scores.reduce((sum, s) => sum + s.score, 0) / scores.length
+    : 0;
+
   const totalStudents = scores.length;
-  
-  const avgPart1 = scores.length > 0
-    ? scores.reduce((sum, s) => sum + (s.part1Score || 0), 0) / scores.length
+  const perfectScores = scores.filter(s => s.score === s.totalQuestions).length;
+  const averagePercentage = scores.length > 0
+    ? (scores.reduce((sum, s) => sum + (s.score / s.totalQuestions) * 100, 0) / scores.length)
     : 0;
-  
-  const avgPart2 = scores.length > 0
-    ? scores.reduce((sum, s) => sum + (s.part2Score || 0), 0) / scores.length
-    : 0;
-  
-  const avgOverall = scores.length > 0
-    ? scores.reduce((sum, s) => sum + (s.overallScore || 0), 0) / scores.length
-    : 0;
-  
-  const avgOverallPercentage = ((avgOverall / 10) * 100) || 0;
 
-  const perfectScores = scores.filter(s => 
-    s.part1Score === s.part1Total && s.part2Score === s.part2Total
-  ).length;
-
-  // Sort scores by overall percentage
+  // Sort scores by percentage (highest first)
   const sortedScores = [...scores].sort((a, b) => {
-    const percentA = ((a.overallScore || 0) / (a.overallTotal || 1)) * 100;
-    const percentB = ((b.overallScore || 0) / (b.overallTotal || 1)) * 100;
+    const percentA = (a.score / a.totalQuestions) * 100;
+    const percentB = (b.score / b.totalQuestions) * 100;
     return percentB - percentA;
   });
-
-  const getStarRating = (score: number, total: number) => {
-    const percentage = (score / total) * 100;
-    if (percentage >= 90) return '⭐⭐⭐⭐⭐';
-    if (percentage >= 70) return '⭐⭐⭐⭐';
-    if (percentage >= 50) return '⭐⭐⭐';
-    if (percentage >= 30) return '⭐⭐';
-    return '⭐';
-  };
 
   return (
     <div className="min-h-screen relative overflow-hidden">
@@ -81,6 +57,19 @@ export function TeacherDashboard({ scores, onBack, onRefresh }: TeacherDashboard
 
       <FloatingFish />
 
+      {/* Animated grid pattern */}
+      <motion.div
+        className="absolute inset-0 opacity-5"
+        animate={{
+          backgroundPosition: ['0% 0%', '100% 100%'],
+        }}
+        transition={{ duration: 30, repeat: Infinity, ease: 'linear' }}
+        style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' stroke='%23ffffff' stroke-width='1'%3E%3Cpath d='M0 0h80v80H0z'/%3E%3Cpath d='M0 0l80 80M80 0L0 80'/%3E%3C/g%3E%3C/svg%3E")`,
+          backgroundSize: '80px 80px',
+        }}
+      />
+
       <div className="relative z-10 min-h-screen p-6">
         {/* Header */}
         <motion.div
@@ -88,40 +77,54 @@ export function TeacherDashboard({ scores, onBack, onRefresh }: TeacherDashboard
           animate={{ opacity: 1, y: 0 }}
           className="max-w-7xl mx-auto mb-8"
         >
-          <div className="bg-white/98 backdrop-blur-xl rounded-3xl p-8 shadow-2xl border border-white/50">
-            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-              <div className="flex items-center gap-4">
-                <div className="bg-gradient-to-br from-[#FDB813] to-[#4ECDC4] rounded-2xl p-4 shadow-xl">
-                  <GraduationCap className="w-10 h-10 text-white" />
-                </div>
-                <div>
-                  <h1 className="bg-gradient-to-r from-[#0B3D91] to-[#4ECDC4] bg-clip-text text-transparent">
-                    Dashboard ng Guro
-                  </h1>
-                  <p className="text-[#0B3D91]/70 text-lg">
-                    📊 Detailed Quiz Results (Part 1 & 2)
-                  </p>
-                </div>
-              </div>
-              
-              <div className="flex flex-wrap gap-3">
-                {onRefresh && (
-                  <Button
-                    onClick={onRefresh}
-                    className="bg-gradient-to-r from-[#4ECDC4] to-[#4ECDC4]/80 hover:from-[#4ECDC4]/90 hover:to-[#4ECDC4]/70 text-white shadow-lg"
+          <div className="relative">
+            <div className="absolute inset-0 bg-gradient-to-r from-[#FDB813]/20 to-[#4ECDC4]/20 blur-3xl" />
+
+            <div className="relative bg-white/98 backdrop-blur-xl rounded-3xl p-8 shadow-2xl border border-white/50">
+              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+                <div className="flex items-center gap-4">
+                  <motion.div
+                    className="bg-gradient-to-br from-[#FDB813] to-[#4ECDC4] rounded-2xl p-4 shadow-xl"
+                    animate={{
+                      rotate: [0, 5, 0, -5, 0],
+                    }}
+                    transition={{ duration: 3, repeat: Infinity }}
                   >
-                    <RefreshCw className="w-4 h-4 mr-2" />
-                    I-refresh
-                  </Button>
-                )}
-                <Button
-                  onClick={onBack}
-                  variant="outline"
-                  className="border-2 border-[#0B3D91] text-[#0B3D91] hover:bg-[#0B3D91] hover:text-white"
-                >
-                  <ArrowLeft className="w-4 h-4 mr-2" />
-                  Bumalik
-                </Button>
+                    <GraduationCap className="w-10 h-10 text-white" />
+                  </motion.div>
+                  <div>
+                    <h1 className="bg-gradient-to-r from-[#0B3D91] to-[#4ECDC4] bg-clip-text text-transparent">
+                      Dashboard ng Guro
+                    </h1>
+                    <p className="text-[#0B3D91]/70 text-lg">
+                      📊 Mga Resulta ng Pagsusulit
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap gap-3">
+                  {onRefresh && (
+                    <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                      <Button
+                        onClick={onRefresh}
+                        className="bg-gradient-to-r from-[#4ECDC4] to-[#4ECDC4]/80 hover:from-[#4ECDC4]/90 hover:to-[#4ECDC4]/70 text-white shadow-lg"
+                      >
+                        <RefreshCw className="w-4 h-4 mr-2" />
+                        I-refresh
+                      </Button>
+                    </motion.div>
+                  )}
+                  <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                    <Button
+                      onClick={onBack}
+                      variant="outline"
+                      className="border-2 border-[#0B3D91] text-[#0B3D91] hover:bg-[#0B3D91] hover:text-white"
+                    >
+                      <ArrowLeft className="w-4 h-4 mr-2" />
+                      Bumalik
+                    </Button>
+                  </motion.div>
+                </div>
               </div>
             </div>
           </div>
@@ -140,24 +143,28 @@ export function TeacherDashboard({ scores, onBack, onRefresh }: TeacherDashboard
               label: 'Kabuuang Mag-aaral',
               value: totalStudents,
               gradient: 'from-[#4ECDC4] to-[#4ECDC4]/70',
+              bgGradient: 'from-[#4ECDC4]/20 to-[#4ECDC4]/5',
             },
             {
               icon: TrendingUp,
-              label: 'Average Bahagi 1',
-              value: `${avgPart1.toFixed(1)} / 5`,
-              gradient: 'from-blue-500 to-blue-400',
+              label: 'Average na Iskor',
+              value: `${averageScore.toFixed(1)} / 5`,
+              gradient: 'from-[#FDB813] to-[#FDB813]/70',
+              bgGradient: 'from-[#FDB813]/20 to-[#FDB813]/5',
+            },
+            {
+              icon: Crown,
+              label: 'Perpektong Iskor',
+              value: perfectScores,
+              gradient: 'from-[#FF6B6B] to-[#FF6B6B]/70',
+              bgGradient: 'from-[#FF6B6B]/20 to-[#FF6B6B]/5',
             },
             {
               icon: Target,
-              label: 'Average Bahagi 2',
-              value: `${avgPart2.toFixed(1)} / 5`,
-              gradient: 'from-indigo-500 to-indigo-400',
-            },
-            {
-              icon: Award,
-              label: 'Perfect Scores',
-              value: perfectScores,
-              gradient: 'from-[#FDB813] to-[#FDB813]/70',
+              label: 'Average na %',
+              value: `${averagePercentage.toFixed(1)}%`,
+              gradient: 'from-[#0B3D91] to-[#0B3D91]/70',
+              bgGradient: 'from-[#0B3D91]/20 to-[#0B3D91]/5',
             },
           ].map((stat, i) => {
             const Icon = stat.icon;
@@ -170,14 +177,20 @@ export function TeacherDashboard({ scores, onBack, onRefresh }: TeacherDashboard
                 whileHover={{ scale: 1.05, y: -5 }}
                 className="relative group"
               >
+                <div className={`absolute inset-0 bg-gradient-to-br ${stat.bgGradient} blur-xl opacity-70 group-hover:opacity-100 transition-opacity`} />
+
                 <div className="relative bg-white/98 backdrop-blur-xl rounded-2xl p-6 shadow-xl border border-white/50">
                   <div className="flex items-start justify-between mb-4">
                     <div className={`bg-gradient-to-br ${stat.gradient} rounded-xl p-3 shadow-lg`}>
                       <Icon className="w-6 h-6 text-white" />
                     </div>
-                    <div className={`text-4xl bg-gradient-to-br ${stat.gradient} bg-clip-text text-transparent`}>
+                    <motion.div
+                      animate={{ scale: [1, 1.2, 1], opacity: [0.5, 1, 0.5] }}
+                      transition={{ duration: 2, repeat: Infinity }}
+                      className={`text-4xl bg-gradient-to-br ${stat.gradient} bg-clip-text text-transparent`}
+                    >
                       {stat.value}
-                    </div>
+                    </motion.div>
                   </div>
                   <p className="text-[#0B3D91]/70">{stat.label}</p>
                 </div>
@@ -194,13 +207,33 @@ export function TeacherDashboard({ scores, onBack, onRefresh }: TeacherDashboard
           className="max-w-7xl mx-auto"
         >
           <div className="relative">
+            <div className="absolute inset-0 bg-gradient-to-r from-[#FDB813]/20 to-[#4ECDC4]/20 blur-3xl" />
+
             <div className="relative bg-white/98 backdrop-blur-xl rounded-3xl shadow-2xl overflow-hidden border border-white/50">
-              {/* Table Header */}
-              <div className="bg-gradient-to-r from-[#0B3D91] via-[#0B3D91]/95 to-[#0B3D91] p-8">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-white">
-                    📚 Kompletong Listahan (Bahagi 1 & 2)
-                  </h2>
+              {/* Table Header with decorative design */}
+              <div className="relative bg-gradient-to-r from-[#0B3D91] via-[#0B3D91]/95 to-[#0B3D91] p-8 overflow-hidden">
+                {/* Decorative pattern */}
+                <div className="absolute inset-0 opacity-10">
+                  <div className="absolute inset-0" style={{
+                    backgroundImage: `url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M50 0L100 50L50 100L0 50z' fill='%23ffffff'/%3E%3C/svg%3E")`,
+                    backgroundSize: '50px 50px',
+                  }} />
+                </div>
+
+                <div className="relative flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Medal className="w-8 h-8 text-[#FDB813]" />
+                    <h2 className="text-white">
+                      📚 Kompletong Listahan ng mga Iskor
+                    </h2>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    className="text-white hover:bg-white/10"
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    I-download
+                  </Button>
                 </div>
               </div>
 
@@ -208,7 +241,13 @@ export function TeacherDashboard({ scores, onBack, onRefresh }: TeacherDashboard
               <div className="p-8">
                 {scores.length === 0 ? (
                   <div className="text-center py-20">
-                    <div className="text-9xl mb-6">📝</div>
+                    <motion.div
+                      animate={{ y: [0, -10, 0], rotate: [0, 5, -5, 0] }}
+                      transition={{ duration: 3, repeat: Infinity }}
+                      className="text-9xl mb-6"
+                    >
+                      📝
+                    </motion.div>
                     <p className="text-[#0B3D91]/70 text-xl mb-2">
                       Wala pang kumuha ng pagsusulit
                     </p>
@@ -220,123 +259,143 @@ export function TeacherDashboard({ scores, onBack, onRefresh }: TeacherDashboard
                   <div className="overflow-x-auto">
                     <Table>
                       <TableHeader>
-                        <TableRow className="border-[#0B3D91]/20">
-                          <TableHead className="text-[#0B3D91]">🏅 Rank</TableHead>
-                          <TableHead className="text-[#0B3D91]">👤 Pangalan</TableHead>
-                          <TableHead className="text-[#0B3D91]">📘 Bahagi 1</TableHead>
-                          <TableHead className="text-[#0B3D91]">📗 Bahagi 2</TableHead>
-                          <TableHead className="text-[#0B3D91]">📊 Kabuuan</TableHead>
-                          <TableHead className="text-[#0B3D91]">⭐ Rating</TableHead>
-                          <TableHead className="text-[#0B3D91]">📅 Petsa</TableHead>
+                        <TableRow className="border-[#0B3D91]/20 hover:bg-transparent">
+                          <TableHead className="text-[#0B3D91]">
+                            🏅 Rank
+                          </TableHead>
+                          <TableHead className="text-[#0B3D91]">
+                            👤 Pangalan
+                          </TableHead>
+                          <TableHead className="text-[#0B3D91]">
+                            ✅ Iskor
+                          </TableHead>
+                          <TableHead className="text-[#0B3D91]">
+                            📊 Porsyento
+                          </TableHead>
+                          <TableHead className="text-[#0B3D91]">
+                            📅 Petsa
+                          </TableHead>
+                          <TableHead className="text-[#0B3D91]">
+                            ⭐ Katayuan
+                          </TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {sortedScores.map((student, index) => {
-                          const overallPercentage = ((student.overallScore || 0) / (student.overallTotal || 1)) * 100;
-                          const part1Percentage = ((student.part1Score || 0) / (student.part1Total || 1)) * 100;
-                          const part2Percentage = ((student.part2Score || 0) / (student.part2Total || 1)) * 100;
+                          const percentage = (student.score / student.totalQuestions) * 100;
                           const isTop3 = index < 3;
-                          
+
                           return (
                             <motion.tr
                               key={index}
                               initial={{ opacity: 0, x: -30 }}
                               animate={{ opacity: 1, x: 0 }}
                               transition={{ delay: 0.05 * index }}
-                              className="border-[#0B3D91]/10 hover:bg-gradient-to-r hover:from-[#F5E8C7]/30 hover:to-transparent"
+                              className={`border-[#0B3D91]/10 hover:bg-gradient-to-r transition-all ${
+                                isTop3
+                                  ? 'hover:from-[#FDB813]/10 hover:to-[#4ECDC4]/10'
+                                  : 'hover:from-[#F5E8C7]/30 hover:to-transparent'
+                              }`}
                             >
-                              {/* Rank */}
                               <TableCell>
-                                <span className={`font-semibold ${isTop3 ? 'text-[#FDB813]' : 'text-[#0B3D91]/60'}`}>
-                                  #{index + 1}
-                                </span>
+                                <div className="flex items-center gap-2">
+                                  {index === 0 && (
+                                    <motion.div
+                                      animate={{ rotate: [0, 10, -10, 0], scale: [1, 1.1, 1] }}
+                                      transition={{ duration: 2, repeat: Infinity }}
+                                    >
+                                      <Crown className="w-6 h-6 text-[#FDB813]" fill="currentColor" />
+                                    </motion.div>
+                                  )}
+                                  {index === 1 && (
+                                    <Medal className="w-6 h-6 text-[#C0C0C0]" />
+                                  )}
+                                  {index === 2 && (
+                                    <Medal className="w-6 h-6 text-[#CD7F32]" />
+                                  )}
+                                  <span className={`${isTop3 ? 'font-semibold text-[#FDB813]' : 'text-[#0B3D91]/60'}`}>
+                                    #{index + 1}
+                                  </span>
+                                </div>
                               </TableCell>
-                              
-                              {/* Name */}
+
                               <TableCell>
                                 <span className={`${isTop3 ? 'font-semibold text-[#0B3D91]' : 'text-[#0B3D91]'}`}>
                                   {student.name}
                                 </span>
                               </TableCell>
-                              
-                              {/* Part 1 Score */}
+
                               <TableCell>
-                                <div className="space-y-1">
-                                  <div className="flex items-center gap-2">
-                                    <span className="text-blue-600 font-semibold">
-                                      {student.part1Score || 0}/{student.part1Total || 5}
-                                    </span>
-                                    <span className="text-sm text-blue-600">
-                                      ({part1Percentage.toFixed(0)}%)
-                                    </span>
-                                  </div>
-                                  <div className="w-24 bg-blue-100 rounded-full h-2">
-                                    <div 
-                                      className="bg-blue-600 h-2 rounded-full"
-                                      style={{ width: `${part1Percentage}%` }}
-                                    />
-                                  </div>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-[#0B3D91] font-semibold text-lg">
+                                    {student.score}
+                                  </span>
+                                  <span className="text-[#0B3D91]/60">
+                                    / {student.totalQuestions}
+                                  </span>
                                 </div>
                               </TableCell>
-                              
-                              {/* Part 2 Score */}
+
                               <TableCell>
-                                <div className="space-y-1">
-                                  <div className="flex items-center gap-2">
-                                    <span className="text-indigo-600 font-semibold">
-                                      {student.part2Score || 0}/{student.part2Total || 5}
-                                    </span>
-                                    <span className="text-sm text-indigo-600">
-                                      ({part2Percentage.toFixed(0)}%)
-                                    </span>
-                                  </div>
-                                  <div className="w-24 bg-indigo-100 rounded-full h-2">
-                                    <div 
-                                      className="bg-indigo-600 h-2 rounded-full"
-                                      style={{ width: `${part2Percentage}%` }}
-                                    />
-                                  </div>
-                                </div>
-                              </TableCell>
-                              
-                              {/* Overall Score */}
-                              <TableCell>
-                                <div className="space-y-1">
-                                  <div className="flex items-center gap-2">
-                                    <span className="text-[#0B3D91] font-bold text-lg">
-                                      {student.overallScore || 0}/{student.overallTotal || 10}
-                                    </span>
-                                    <span className={`font-semibold ${
-                                      overallPercentage >= 90 ? 'text-green-600' :
-                                      overallPercentage >= 70 ? 'text-blue-600' :
-                                      'text-gray-600'
-                                    }`}>
-                                      {overallPercentage.toFixed(0)}%
-                                    </span>
-                                  </div>
-                                  <div className="w-32 bg-gray-200 rounded-full h-2">
-                                    <div 
-                                      className={`h-2 rounded-full ${
-                                        overallPercentage >= 90 ? 'bg-green-600' :
-                                        overallPercentage >= 70 ? 'bg-blue-600' :
-                                        'bg-gray-600'
+                                <div className="flex items-center gap-3">
+                                  <div className="w-32 bg-gradient-to-r from-[#F5E8C7] to-[#F5E8C7]/50 rounded-full h-3 overflow-hidden shadow-inner">
+                                    <motion.div
+                                      className={`h-full rounded-full ${
+                                        percentage === 100
+                                          ? 'bg-gradient-to-r from-[#FDB813] to-[#FF6B6B]'
+                                          : percentage >= 80
+                                          ? 'bg-gradient-to-r from-[#4ECDC4] to-[#FDB813]'
+                                          : 'bg-gradient-to-r from-[#0B3D91] to-[#4ECDC4]'
                                       }`}
-                                      style={{ width: `${overallPercentage}%` }}
+                                      initial={{ width: 0 }}
+                                      animate={{ width: `${percentage}%` }}
+                                      transition={{ duration: 1, delay: 0.1 * index }}
                                     />
                                   </div>
+                                  <span className={`font-semibold ${
+                                    percentage === 100
+                                      ? 'text-[#FDB813]'
+                                      : percentage >= 80
+                                      ? 'text-[#4ECDC4]'
+                                      : 'text-[#0B3D91]'
+                                  }`}>
+                                    {percentage.toFixed(0)}%
+                                  </span>
                                 </div>
                               </TableCell>
-                              
-                              {/* Star Rating */}
-                              <TableCell>
-                                <span className="text-lg">
-                                  {getStarRating(student.overallScore || 0, student.overallTotal || 10)}
-                                </span>
-                              </TableCell>
-                              
-                              {/* Date */}
-                              <TableCell className="text-[#0B3D91]/70 text-sm">
+
+                              <TableCell className="text-[#0B3D91]/70">
                                 {student.date}
+                              </TableCell>
+
+                              <TableCell>
+                                {percentage === 100 && (
+                                  <motion.span
+                                    initial={{ scale: 0 }}
+                                    animate={{ scale: 1 }}
+                                    whileHover={{ scale: 1.1 }}
+                                    className="inline-flex items-center gap-2 bg-gradient-to-r from-[#FDB813] to-[#FF6B6B] text-white px-4 py-2 rounded-full shadow-lg"
+                                  >
+                                    <Crown className="w-4 h-4" fill="currentColor" />
+                                    Perpekto!
+                                  </motion.span>
+                                )}
+                                {percentage >= 80 && percentage < 100 && (
+                                  <span className="inline-flex items-center gap-2 bg-gradient-to-r from-[#4ECDC4] to-[#4ECDC4]/80 text-white px-4 py-2 rounded-full shadow-lg">
+                                    <Award className="w-4 h-4" />
+                                    Mahusay
+                                  </span>
+                                )}
+                                {percentage >= 60 && percentage < 80 && (
+                                  <span className="inline-flex items-center gap-2 bg-gradient-to-r from-[#FDB813]/80 to-[#FDB813]/60 text-[#0B3D91] px-4 py-2 rounded-full shadow-lg">
+                                    👍 Mabuti
+                                  </span>
+                                )}
+                                {percentage < 60 && (
+                                  <span className="inline-flex items-center gap-2 bg-gray-200 text-gray-700 px-4 py-2 rounded-full">
+                                    📚 Mag-aral pa
+                                  </span>
+                                )}
                               </TableCell>
                             </motion.tr>
                           );
@@ -359,7 +418,7 @@ export function TeacherDashboard({ scores, onBack, onRefresh }: TeacherDashboard
         >
           <div className="bg-white/90 backdrop-blur-lg rounded-2xl p-6 border border-white/50">
             <p className="text-[#0B3D91]/70 italic mb-2">
-              ⚓ Bahagi 1: 5 tanong | Bahagi 2: 5 tanong | Kabuuan: 10 tanong ⚓
+              ⚓ Inspirado sa "Ang Matanda at ang Dagat" ni Ernest Hemingway ⚓
             </p>
             <p className="text-[#0B3D91]/50">
               Ginawa nang may pagmamahal para sa Filipino education

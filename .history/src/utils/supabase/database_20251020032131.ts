@@ -4,40 +4,12 @@ import { supabase, QuizScore } from './client';
  * Database functions for Quiz Scores
  */
 
-// Save a new quiz score to the database (legacy support - use savePart1Score/updatePart2Score for new flow)
+// Save a new quiz score to the database
 export async function saveQuizScore(score: Omit<QuizScore, 'id' | 'created_at'>) {
   try {
-    // Map old schema to new schema
-    const payload: any = {
-      student_name: score.student_name,
-      quiz_topic: score.quiz_topic || 'Ang Matanda at ang Dagat',
-      completed_at: new Date().toISOString()
-    };
-
-    // If it's a complete quiz (both parts), split the score
-    if (score.part1_score !== undefined && score.part2_score !== undefined) {
-      payload.part1_score = score.part1_score;
-      payload.part1_total = score.part1_total || 5;
-      payload.part1_percentage = score.part1_percentage;
-      payload.part2_score = score.part2_score;
-      payload.part2_total = score.part2_total || 5;
-      payload.part2_percentage = score.part2_percentage;
-    } else {
-      // Fallback: treat as complete quiz with combined score
-      // Assume 50/50 split for Part 1 and Part 2
-      const totalScore = score.total_score || 0;
-      const halfTotal = 5;
-      payload.part1_score = Math.min(totalScore, halfTotal);
-      payload.part2_score = Math.max(0, totalScore - halfTotal);
-      payload.part1_total = halfTotal;
-      payload.part2_total = halfTotal;
-      payload.part1_percentage = (payload.part1_score / halfTotal) * 100;
-      payload.part2_percentage = (payload.part2_score / halfTotal) * 100;
-    }
-
     const { data, error } = await supabase
       .from('quiz_scores')
-      .insert([payload])
+      .insert([score])
       .select()
       .single();
 
@@ -94,11 +66,11 @@ export async function getQuizStatistics() {
     const scores = data || [];
     const totalStudents = scores.length;
     const averageScore = totalStudents > 0
-      ? scores.reduce((sum, s) => sum + (s.total_score || 0), 0) / totalStudents
+      ? scores.reduce((sum, s) => sum + s.score, 0) / totalStudents
       : 0;
-    const perfectScores = scores.filter(s => s.overall_percentage === 100).length;
+    const perfectScores = scores.filter(s => s.percentage === 100).length;
     const averagePercentage = totalStudents > 0
-      ? scores.reduce((sum, s) => sum + (s.overall_percentage || 0), 0) / totalStudents
+      ? scores.reduce((sum, s) => sum + s.percentage, 0) / totalStudents
       : 0;
 
     return {
@@ -160,16 +132,15 @@ export function subscribeToQuizScores(callback: (payload: any) => void) {
 }
 
 // --- Convenience functions for the two-part quiz flow ---
-
 // Save Part 1 score and return the new record id
-export async function savePart1Score(student_name: string, score: number, total_questions: number = 5) {
+export async function savePart1Score(student_name: string, score: number, total_questions: number) {
   try {
-    const part1_percentage = (score / total_questions) * 100;
+    const percentage = (score / total_questions) * 100;
     const payload = {
       student_name,
-      part1_score: score,
-      part1_total: total_questions,
-      part1_percentage,
+      score,
+      total_questions,
+      percentage,
       quiz_topic: 'Ang Matanda at ang Dagat'
     };
 
@@ -180,6 +151,7 @@ export async function savePart1Score(student_name: string, score: number, total_
       .single();
 
     if (error) throw error;
+    // return the new record id for later updates
     return { success: true, recordId: data?.id };
   } catch (error) {
     console.error('Error saving part1 score:', error);
@@ -187,19 +159,24 @@ export async function savePart1Score(student_name: string, score: number, total_
   }
 }
 
-// Update an existing record with part 2 score
-export async function updatePart2Score(recordId: number, part2Score: number, totalQuestions: number = 5) {
+// Update an existing record with part 2 score and recalculate totals/percentage
+export async function updatePart2Score(recordId: number, part2Score: number, totalQuestions: number) {
   try {
-    const part2_percentage = (part2Score / totalQuestions) * 100;
-    
+    // Fetch existing record to combine scores if needed
+    const { data: existing, error: fetchError } = await supabase
+      .from('quiz_scores')
+      .select('*')
+      .eq('id', recordId)
+      .single();
+
+    if (fetchError) throw fetchError;
+
+    const combinedScore = (existing?.score || 0) + part2Score;
+    const percentage = (combinedScore / (totalQuestions * 1)) * 100; // keep totalQuestions consistent
+
     const { error } = await supabase
       .from('quiz_scores')
-      .update({ 
-        part2_score: part2Score, 
-        part2_total: totalQuestions, 
-        part2_percentage,
-        completed_at: new Date().toISOString() // Mark as completed
-      })
+      .update({ score: combinedScore, total_questions: totalQuestions, percentage })
       .eq('id', recordId);
 
     if (error) throw error;

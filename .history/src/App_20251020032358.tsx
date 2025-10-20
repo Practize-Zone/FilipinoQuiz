@@ -6,7 +6,6 @@ import { QuizScreen } from './components/QuizScreen';
 import { ResultScreen } from './components/ResultScreen';
 import { TeacherDashboard } from './components/TeacherDashboard';
 import { AdminLogin } from './components/AdminLogin';
-import { getAllQuizScores } from './utils/supabase/database';
 
 // ⚠️ SUPABASE INTEGRATION - enabled
 import { savePart1Score, updatePart2Score } from './utils/supabase/database';
@@ -72,30 +71,30 @@ export default function App() {
   }, [currentScreen]);
 
   // ⚠️ SUPABASE - Load scores from database when admin dashboard opens
-  useEffect(() => {
-    if (currentScreen === 'admin-dashboard') {
-      loadScoresFromDatabase();
-    }
-  }, [currentScreen]);
+  // useEffect(() => {
+  //   if (currentScreen === 'admin-dashboard') {
+  //     loadScoresFromDatabase();
+  //   }
+  // }, [currentScreen]);
 
-  const loadScoresFromDatabase = async () => {
-    const { success, data } = await getAllQuizScores();
-    if (success && data) {
-      const formattedScores = data.map((score: any) => ({
-        name: score.student_name,
-        score: score.total_score || 0, // Use total_score from new schema
-        totalQuestions: score.total_questions || 10,
-        date: new Date(score.created_at).toLocaleDateString('fil-PH', {
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit'
-        })
-      }));
-      setScores(formattedScores);
-    }
-  };
+  // const loadScoresFromDatabase = async () => {
+  //   const { success, data } = await getAllQuizScores();
+  //   if (success && data) {
+  //     const formattedScores = data.map((score: any) => ({
+  //       name: score.student_name,
+  //       score: score.score,
+  //       totalQuestions: score.total_questions,
+  //       date: new Date(score.created_at).toLocaleDateString('fil-PH', {
+  //         year: 'numeric',
+  //         month: 'long',
+  //         day: 'numeric',
+  //         hour: '2-digit',
+  //         minute: '2-digit'
+  //       })
+  //     }));
+  //     setScores(formattedScores);
+  //   }
+  // };
 
   const handleStart = (name: string) => {
     setStudentName(name);
@@ -111,9 +110,6 @@ export default function App() {
       const { success, recordId } = await savePart1Score(studentName, score, totalReviewQuestions);
       if (success && recordId) {
         setCurrentRecordId(recordId);
-        console.log('✅ Part 1 saved with ID:', recordId);
-      } else {
-        console.error('❌ Failed to save Part 1 score');
       }
     })();
   };
@@ -127,29 +123,32 @@ export default function App() {
     // DON'T reset studentName - keep it so they can restart quickly!
     setReviewScore(0);
     setCurrentScore(0);
-    setCurrentRecordId(null); // Reset record ID
   };
 
   const handleQuizComplete = async (score: number) => {
     setCurrentScore(score);
+    
+    const percentage = (score / totalQuestions) * 100;
+    
+    // ⚠️ SUPABASE - Save to database (uncomment when using in VSCode)
+    // await saveQuizScore({
+    //   student_name: studentName,
+    //   score: score,
+    //   total_questions: totalQuestions,
+    //   percentage: percentage,
+    //   quiz_topic: 'Ang Matanda at ang Dagat'
+    // });
 
-    // ⚠️ SUPABASE - Update Part 2 score if we have a record ID from Part 1
+    // Save to database part2 (if two-part flow) and to local state
     if (currentRecordId) {
-      const { success } = await updatePart2Score(currentRecordId, score, totalQuestions);
-      if (success) {
-        console.log('✅ Part 2 saved successfully');
-      } else {
-        console.error('❌ Failed to save Part 2 score');
-      }
-    } else {
-      console.warn('⚠️ No record ID found - Part 1 may not have been saved');
+      await updatePart2Score(currentRecordId, score, totalQuestions);
     }
 
-    // Save to local state for immediate display
+    // Temporary: Save to local state (remove when using Supabase)
     const newScore: StudentScore = {
       name: studentName,
-      score: reviewScore + score, // Combined score from both parts
-      totalQuestions: totalReviewQuestions + totalQuestions, // Total 10 questions
+      score: score,
+      totalQuestions: totalQuestions,
       date: new Date().toLocaleDateString('fil-PH', {
         year: 'numeric',
         month: 'long',
@@ -158,7 +157,7 @@ export default function App() {
         minute: '2-digit'
       })
     };
-
+    
     setScores(prevScores => [...prevScores, newScore]);
     setCurrentScreen('result');
   };
@@ -168,7 +167,6 @@ export default function App() {
     // DON'T reset studentName - keep it for quick restart!
     setReviewScore(0);
     setCurrentScore(0);
-    setCurrentRecordId(null);
   };
 
   const handleViewScores = () => {
@@ -179,27 +177,21 @@ export default function App() {
     }
   };
 
-  const handleAdminLogin = async (email: string, password: string): Promise<boolean> => {
-    try {
-      console.log('Attempting login with:', email); // Debug log
-
-      // Call Supabase authentication
-      const { success, data, error } = await signInTeacher(email, password);
-
-      console.log('Login result:', { success, error }); // Debug log
-
-      if (success && data) {
+  const handleAdminLogin = async (email?: string, password?: string) => {
+    // ⚠️ SUPABASE AUTH - Use real authentication (uncomment when using in VSCode)
+    if (email && password) {
+      const { success } = await signInTeacher(email, password);
+      if (success) {
         setIsAdminAuthenticated(true);
         setCurrentScreen('admin-dashboard');
         return true;
       } else {
-        console.error('Login failed:', error);
         return false;
       }
-    } catch (error) {
-      console.error('Login error:', error);
-      return false;
     }
+
+    // Fallback - if no credentials provided, deny
+    return false;
   };
 
   const handleBackFromAdmin = async () => {
@@ -211,7 +203,6 @@ export default function App() {
     setStudentName('');
     setReviewScore(0);
     setCurrentScore(0);
-    setCurrentRecordId(null);
     window.history.pushState({}, '', '/');
   };
 
@@ -223,7 +214,7 @@ export default function App() {
   return (
     <div className="size-full">
       {currentScreen === 'welcome' && (
-        <WelcomeScreen
+        <WelcomeScreen 
           onStart={handleStart}
           existingName={studentName}
         />
@@ -245,14 +236,14 @@ export default function App() {
           onBackToMenu={handleBackToMenuFromUnlocked}
         />
       )}
-
+      
       {currentScreen === 'quiz' && (
-        <QuizScreen
-          studentName={studentName}
-          onComplete={handleQuizComplete}
+        <QuizScreen 
+          studentName={studentName} 
+          onComplete={handleQuizComplete} 
         />
       )}
-
+      
       {currentScreen === 'result' && (
         <ResultScreen
           studentName={studentName}
@@ -269,7 +260,7 @@ export default function App() {
           onBack={handleBackFromAdminLogin}
         />
       )}
-
+      
       {currentScreen === 'admin-dashboard' && (
         <TeacherDashboard
           scores={scores}
