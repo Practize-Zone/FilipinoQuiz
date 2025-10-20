@@ -26,7 +26,7 @@ const questions: Question[] = [
       'Isang liham na ipinapadala sa mga tagapakinig',
       'Isang awit na nagpapahayag ng damdamin'
     ],
-    correctAnswer: 2
+    correctAnswer: 1
   },
   {
     id: 2,
