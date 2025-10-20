@@ -31,7 +31,7 @@ export default function App() {
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
 
   const totalReviewQuestions = 2; // Pagbabalik-aral has 2 questions
-  const totalQuestions = 5; // Main quiz has 5 questions
+  const totalQuestions = 2; // Main quiz has 2 questions
 
   // ⚠️ SUPABASE AUTH - enabled
   // Check if teacher is already logged in on mount

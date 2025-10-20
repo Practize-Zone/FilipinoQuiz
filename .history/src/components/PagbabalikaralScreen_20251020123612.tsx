@@ -136,7 +136,7 @@ export function PagbabalikaralScreen({ studentName, onComplete }: Pagbabalikaral
           {currentQuestion === 0 && !showFeedback && (
             <div className="mt-4 bg-blue-50 border border-blue-200 rounded-xl p-4">
               <p className="text-sm text-blue-900">
-                <strong>Panuto:</strong> Basahin at unawain ang bawat tanong. Piliin ang tamang sagot sa pamamagitan ng pag-click sa titik o opsyon na sa tingin mo ay wasto.
+                <strong>Panuto:</strong> Basahin at unawain ang pangungusap sa bawat bilang at ibigay ang kahulugan ng mga salitang initiman batay sa pagkakagamit nito sa pangungusap. Pagkatapos bigkasin sa harapan ang nabuong tamang salita.
               </p>
             </div>
           )}

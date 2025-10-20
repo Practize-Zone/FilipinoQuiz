@@ -340,7 +340,7 @@ export function TeacherDashboard({ scores, onBack, onRefresh }: TeacherDashboard
                                     {student.score}
                                   </span>
                                   <span className="text-[#0B3D91]/60">
-                                    / 7
+                                    / {student.totalQuestions}
                                   </span>
                                 </div>
                               </TableCell>

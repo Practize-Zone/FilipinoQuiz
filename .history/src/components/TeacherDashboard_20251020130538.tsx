@@ -46,9 +46,9 @@ export function TeacherDashboard({ scores, onBack, onRefresh }: TeacherDashboard
     : 0;
 
   // Sort scores by percentage (highest first)
-  const sortedScores = [...normalizedScores].sort((a, b) => {
-    const percentA = (a.score / totalPossibleScore) * 100;
-    const percentB = (b.score / totalPossibleScore) * 100;
+  const sortedScores = [...scores].sort((a, b) => {
+    const percentA = (a.score / a.totalQuestions) * 100;
+    const percentB = (b.score / b.totalQuestions) * 100;
     return percentB - percentA;
   });
 
@@ -340,7 +340,7 @@ export function TeacherDashboard({ scores, onBack, onRefresh }: TeacherDashboard
                                     {student.score}
                                   </span>
                                   <span className="text-[#0B3D91]/60">
-                                    / 7
+                                    / {student.totalQuestions}
                                   </span>
                                 </div>
                               </TableCell>

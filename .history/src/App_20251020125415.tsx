@@ -30,7 +30,7 @@ export default function App() {
   const [scores, setScores] = useState<StudentScore[]>([]);
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
 
-  const totalReviewQuestions = 2; // Pagbabalik-aral has 2 questions
+  const totalReviewQuestions = 5; // Pagbabalik-aral has 5 questions
   const totalQuestions = 5; // Main quiz has 5 questions
 
   // ⚠️ SUPABASE AUTH - enabled

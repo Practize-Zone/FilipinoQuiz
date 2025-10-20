@@ -26,20 +26,52 @@ const questions: Question[] = [
       'Isang liham na ipinapadala sa mga tagapakinig',
       'Isang awit na nagpapahayag ng damdamin'
     ],
-    correctAnswer: 2
+    correctAnswer: B=2
   },
   {
     id: 2,
-    question: 'Sino si Dilma Rousseff?',
+    question: 'Ano ang kahulugan ng salitang "kabiguan" sa akda?',
     options: [
-      'Isang manunulat na mula sa Brazil na tumanggap ng Nobel Prize sa Panitikan',
-      'Isang guro at makata na lumaban sa diktadura sa Brazil',
-      'Isang politiko at ekonomistang mula sa Brazil na naging unang babaeng pangulo ng bansa',
-      'Isang artista at mang-aawit na sumikat sa Latin America'
+      'Tagumpay',
+      'Pagkawala ng layunin',
+      'Hindi pagkamit sa inaasahan o mithiin',
+      'Pagiging tamad'
     ],
     correctAnswer: 2
   },
-  
+  {
+    id: 3,
+    question: 'Ano ang ipinahihiwatig ng pag-asa sa akda?',
+    options: [
+      'Paniniwala sa magandang mangyayari kahit sa hirap',
+      'Pag-asa sa ibang tao',
+      'Pag-iisip ng masama',
+      'Pagkabigo sa buhay'
+    ],
+    correctAnswer: 0
+  },
+  {
+    id: 4,
+    question: 'Ano ang ibig sabihin ng salitang "pagpapakasakit" sa akda?',
+    options: [
+      'Pagdurusa para sa mahalagang layunin',
+      'Paghihiganti',
+      'Pagsuko sa problema',
+      'Pagpapabaya'
+    ],
+    correctAnswer: 0
+  },
+  {
+    id: 5,
+    question: 'Ano ang ibig sabihin ng "pakikibaka" sa akda?',
+    options: [
+      'Pag-aaway sa kapwa',
+      'Pakikipaglaban sa mga suliranin sa buhay',
+      'Pagpapahinga pagkatapos ng gawain',
+      'Pagtanggap ng pagkatalo'
+    ],
+    correctAnswer: 1
+  }
 ];
 
 export function PagbabalikaralScreen({ studentName, onComplete }: PagbabalikaralScreenProps) {
@@ -136,7 +168,7 @@ export function PagbabalikaralScreen({ studentName, onComplete }: Pagbabalikaral
           {currentQuestion === 0 && !showFeedback && (
             <div className="mt-4 bg-blue-50 border border-blue-200 rounded-xl p-4">
               <p className="text-sm text-blue-900">
-                <strong>Panuto:</strong> Basahin at unawain ang bawat tanong. Piliin ang tamang sagot sa pamamagitan ng pag-click sa titik o opsyon na sa tingin mo ay wasto.
+                <strong>Panuto:</strong> Basahin at unawain ang pangungusap sa bawat bilang at ibigay ang kahulugan ng mga salitang initiman batay sa pagkakagamit nito sa pangungusap. Pagkatapos bigkasin sa harapan ang nabuong tamang salita.
               </p>
             </div>
           )}

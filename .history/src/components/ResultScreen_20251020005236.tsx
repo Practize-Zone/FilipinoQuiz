@@ -57,7 +57,7 @@ export function ResultScreen({
               style={{
                 left: `${Math.random() * 100}%`,
                 top: -20,
-                backgroundColor: ['#3B82F6', '#10B981', '#b89860ff', '#EF4444', '#8B5CF6'][Math.floor(Math.random() * 5)]
+                backgroundColor: ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'][Math.floor(Math.random() * 5)]
               }}
               animate={{
                 y: window.innerHeight + 100,

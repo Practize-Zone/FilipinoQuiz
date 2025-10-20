@@ -42,7 +42,7 @@ CREATE TABLE quiz_scores (
   overall_percentage NUMERIC(5,2) GENERATED ALWAYS AS (
     CASE 
       WHEN COALESCE(part1_score, 0) + COALESCE(part2_score, 0) > 0 
-      THEN ROUND(((COALESCE(part1_score, 0) + COALESCE(part2_score, 0))::NUMERIC / 4) * 100, 2)
+      THEN ROUND(((COALESCE(part1_score, 0) + COALESCE(part2_score, 0))::NUMERIC / 10) * 100, 2)
       ELSE 0
     END
   ) STORED,

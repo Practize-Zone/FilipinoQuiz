@@ -26,29 +26,20 @@ interface TeacherDashboardProps {
 }
 
 export function TeacherDashboard({ scores, onBack, onRefresh }: TeacherDashboardProps) {
-  const totalPossibleScore = 7; // Total questions across both parts
-  
-  // Normalize all scores to be out of 7
-  const normalizedScores = scores.map(s => ({
-    ...s,
-    score: s.score,
-    totalQuestions: totalPossibleScore
-  }));
-
-  const averageScore = normalizedScores.length > 0
-    ? normalizedScores.reduce((sum, s) => sum + s.score, 0) / normalizedScores.length
+  const averageScore = scores.length > 0
+    ? scores.reduce((sum, s) => sum + s.score, 0) / scores.length
     : 0;
 
-  const totalStudents = normalizedScores.length;
-  const perfectScores = normalizedScores.filter(s => s.score === totalPossibleScore).length;
-  const averagePercentage = normalizedScores.length > 0
-    ? (normalizedScores.reduce((sum, s) => sum + (s.score / totalPossibleScore) * 100, 0) / normalizedScores.length)
+  const totalStudents = scores.length;
+  const perfectScores = scores.filter(s => s.score === s.totalQuestions).length;
+  const averagePercentage = scores.length > 0
+    ? (scores.reduce((sum, s) => sum + (s.score / s.totalQuestions) * 100, 0) / scores.length)
     : 0;
 
   // Sort scores by percentage (highest first)
-  const sortedScores = [...normalizedScores].sort((a, b) => {
-    const percentA = (a.score / totalPossibleScore) * 100;
-    const percentB = (b.score / totalPossibleScore) * 100;
+  const sortedScores = [...scores].sort((a, b) => {
+    const percentA = (a.score / a.totalQuestions) * 100;
+    const percentB = (b.score / b.totalQuestions) * 100;
     return percentB - percentA;
   });
 
@@ -340,7 +331,7 @@ export function TeacherDashboard({ scores, onBack, onRefresh }: TeacherDashboard
                                     {student.score}
                                   </span>
                                   <span className="text-[#0B3D91]/60">
-                                    / 7
+                                    / {student.totalQuestions}
                                   </span>
                                 </div>
                               </TableCell>

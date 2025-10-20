@@ -86,7 +86,7 @@ export function WelcomeScreen({ onStart, existingName = '' }: WelcomeScreenProps
                   <ul className="text-sm text-gray-700 space-y-1">
                     <li className="flex items-center gap-2">
                       <span className="w-2 h-2 bg-blue-600 rounded-full"></span>
-                      Bahagi 1: Pagbabalik-aral (2 tanong)
+                      Bahagi 1: Pagbabalik-aral (5 tanong)
                     </li>
                     <li className="flex items-center gap-2">
                       <span className="w-2 h-2 bg-indigo-600 rounded-full"></span>
@@ -198,7 +198,7 @@ export function WelcomeScreen({ onStart, existingName = '' }: WelcomeScreenProps
                 <ul className="text-sm text-gray-700 space-y-2">
                   <li className="flex items-center gap-2">
                     <span className="w-2 h-2 bg-blue-600 rounded-full"></span>
-                    Bahagi 1: Pagbabalik-aral (2 tanong)
+                    Bahagi 1: Pagbabalik-aral (5 tanong)
                   </li>
                   <li className="flex items-center gap-2">
                     <span className="w-2 h-2 bg-indigo-600 rounded-full"></span>
